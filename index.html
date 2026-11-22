@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#f7f7f5">
+<title>PARADOX — Daily Word Puzzle</title>
+<style>
+:root{--bg:#f7f7f5;--panel:#fff;--text:#171717;--muted:#6b6b6b;--line:#dededb;--accent:#171717;--soft:#eeeeeb;--good:#267a4b;--bad:#b54242;--shadow:0 18px 55px rgba(0,0,0,.12)}
+[data-theme="dark"]{--bg:#151515;--panel:#202020;--text:#f0f0f0;--muted:#a4a4a4;--line:#3a3a3a;--accent:#f0f0f0;--soft:#2b2b2b;--good:#6fc995;--bad:#f07b7b;--shadow:0 18px 55px rgba(0,0,0,.4)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;transition:background .2s,color .2s}
+button,input,select{font:inherit}
+button{cursor:pointer}
+.app{width:min(680px,100%);margin:0 auto;padding:22px 20px 48px}
+header{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0 18px}
+.brand{font-weight:850;letter-spacing:.14em;font-size:22px}
+.header-actions{display:flex;gap:8px}
+.icon-btn{height:38px;min-width:38px;padding:0 10px;border:1px solid var(--line);background:var(--panel);color:var(--text);border-radius:10px}
+.hero{text-align:center;padding:28px 0 18px}
+.hero h1{font-size:clamp(28px,7vw,42px);letter-spacing:.13em;margin:0 0 8px}
+.hero p{margin:0;color:var(--muted);font-size:14px}
+.meta{display:flex;justify-content:center;gap:18px;flex-wrap:wrap;margin-top:18px;font-size:13px;color:var(--muted)}
+.streak{color:var(--text);font-weight:600}
+.attempts{display:flex;justify-content:center;gap:9px;margin:24px 0}
+.square{width:42px;height:42px;border:1.5px solid var(--line);border-radius:8px;display:grid;place-items:center;font-size:20px;font-weight:700}
+.square.used{background:var(--soft);color:var(--muted);border-color:var(--line)}
+.section-label{font-size:11px;letter-spacing:.13em;color:var(--muted);font-weight:700;margin:24px 0 10px}
+.hints{display:grid;gap:9px}
+.hint{display:flex;align-items:flex-start;gap:12px;padding:13px 14px;background:var(--panel);border:1px solid var(--line);border-radius:12px;line-height:1.45}
+.hint-num{flex:none;width:26px;height:26px;border:1px solid var(--line);border-radius:7px;display:grid;place-items:center;font-size:12px;font-weight:700}
+.hint.false{opacity:.58;text-decoration:line-through;text-decoration-thickness:2px}
+.hint.false .hint-num{color:var(--bad);border-color:var(--bad)}
+.form{margin-top:22px;padding:18px;background:var(--panel);border:1px solid var(--line);border-radius:14px}
+label{display:block;font-size:13px;font-weight:650;margin:0 0 8px}
+select,input{width:100%;height:46px;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--text);padding:0 12px;outline:none}
+select:focus,input:focus{border-color:var(--text)}
+.field+.field{margin-top:14px}
+.submit{width:100%;height:46px;margin-top:16px;border:0;border-radius:10px;background:var(--accent);color:var(--bg);font-weight:700}
+.submit:disabled{opacity:.45;cursor:not-allowed}
+.feedback{min-height:26px;margin:13px 0 0;text-align:center;font-size:14px;line-height:1.5}
+.feedback.good{color:var(--good)}.feedback.bad{color:var(--bad)}
+.result{display:none;margin-top:18px;padding:16px;border:1px solid var(--line);border-radius:12px;background:var(--soft);text-align:center}
+.result.show{display:block}
+.result h2{margin:0 0 8px;font-size:20px}
+.result p{margin:6px 0;color:var(--muted)}
+.result strong{color:var(--text)}
+.footer{text-align:center;margin-top:24px;color:var(--muted);font-size:12px;line-height:1.7}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.48);display:flex;align-items:center;justify-content:center;padding:18px;z-index:10}
+.modal{width:min(480px,100%);background:var(--panel);color:var(--text);border:1px solid var(--line);border-radius:18px;padding:22px;box-shadow:var(--shadow);max-height:90vh;overflow:auto}
+.modal-top{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.modal h2{margin:0;font-size:21px}
+.close{border:1px solid var(--line);background:var(--soft);color:var(--text);width:34px;height:34px;border-radius:9px;font-size:20px}
+.modal p,.modal li{color:var(--muted);font-size:14px;line-height:1.6}
+.modal ol{padding-left:20px}
+.modal .submit{margin-top:8px}
+.hidden{display:none!important}
+@media(max-width:420px){.app{padding:14px 14px 34px}.square{width:38px;height:38px}.hero{padding-top:24px}.form{padding:14px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header>
+  <div class="brand">PARADOX</div>
+  <div class="header-actions">
+    <button class="icon-btn" id="helpBtn" aria-label="How to play" title="How to play">?</button>
+    <button class="icon-btn" id="themeBtn" aria-label="Switch theme" title="Switch light/dark mode">◐</button>
+  </div>
+</header>
+<section class="hero">
+  <h1>PARADOX</h1>
+  <p>One word. Five hints. One lie.</p>
+  <div class="meta">
+    <span id="puzzleNumber">DAILY PUZZLE</span>
+    <span>Length: <strong id="wordLength">—</strong></span>
+    <span class="streak" id="streak">🔥 Streak: 0</span>
+  </div>
+</section>
+<div class="attempts" id="attempts" aria-label="Attempts remaining"></div>
+<div class="section-label">STRUCTURAL HINTS</div>
+<div class="hints" id="structureHints"></div>
+<div class="section-label">SEMANTIC HINTS</div>
+<div class="hints" id="meaningHints"></div>
+<section class="form" id="answerForm">
+  <div class="field">
+    <label for="falseHint">Which hint is false?</label>
+    <select id="falseHint">
+      <option value="">Choose a hint…</option>
+      <option value="1">Hint 1</option><option value="2">Hint 2</option><option value="3">Hint 3</option><option value="4">Hint 4</option><option value="5">Hint 5</option>
+    </select>
+  </div>
+  <div class="field">
+    <label for="wordGuess">Your word</label>
+    <input id="wordGuess" autocomplete="off" autocapitalize="characters" spellcheck="false" maxlength="7" placeholder="Enter your guess">
+  </div>
+  <button class="submit" id="submitBtn">SUBMIT</button>
+  <p class="feedback" id="feedback" aria-live="polite"></p>
+</section>
+<section class="result" id="result" aria-live="polite"></section>
+<div class="footer">
+  New puzzle every day at <strong>12:00 AM GMT+7</strong>.<br>
+  <span id="countdown">Next puzzle in —</span>
+</div>
+</div>
+
+<div class="modal-backdrop hidden" id="modalBackdrop">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-top"><h2 id="modalTitle">How to play PARADOX</h2><button class="close" id="closeModal" aria-label="Close">×</button></div>
+    <p>Every day, a new secret word is waiting for you. Five hints describe it—but exactly one hint is false.</p>
+    <ol>
+      <li>Read the 3 structural hints and 2 hints about the word's meaning.</li>
+      <li>Select the hint you believe is false and enter your word guess.</li>
+      <li>The game checks your selected hint first. If it is wrong, you lose one attempt. If it is correct, the game checks your word.</li>
+      <li>Correctly identify the false hint and the word to win. You have 5 attempts.</li>
+    </ol>
+    <p>Each failed submission crosses out one square. Solve daily to build your streak. A new puzzle arrives at midnight GMT+7.</p>
+    <button class="submit" id="gotIt">GOT IT</button>
+  </div>
+</div>
+<script>
+const puzzles = [
+{word:"BIRD",falseHint:5,hints:["The word has 4 letters.","The word starts with a consonant.","The word contains the letter R.","This creature is capable of flight.","This creature lives exclusively underwater."]},
+{word:"CLOUD",falseHint:4,hints:["The word has 5 letters.","The word starts with C.","The word contains no repeated letters.","It is made primarily of liquid water or ice crystals.","It is a solid object you can pick up."]},
+{word:"PLANT",falseHint:5,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter A.","It can grow.","It must eat other animals to survive."]},
+{word:"STONE",falseHint:4,hints:["The word has 5 letters.","The word starts with a consonant.","The word contains the letter O.","It is naturally occurring and generally solid.","It is usually alive."]},
+{word:"SNAKE",falseHint:5,hints:["The word has 5 letters.","The word starts with S.","The word contains two vowels.","It is a reptile.","It has legs."]},
+{word:"LIGHT",falseHint:4,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter I.","It allows people to see.","It is always heavy and tangible."]},
+{word:"HEART",falseHint:5,hints:["The word has 5 letters.","The word starts with H.","The word contains the letter A.","It is part of the human body.","Its primary job is to digest food."]},
+{word:"MOUSE",falseHint:4,hints:["The word has 5 letters.","The word starts with M.","The word contains two vowels.","It is a small mammal.","It is a type of bird."]},
+{word:"RIVER",falseHint:5,hints:["The word has 5 letters.","The word starts with a consonant.","The word contains the letter R.","It is a natural flowing body of water.","It is usually found above the clouds."]},
+{word:"BRICK",falseHint:4,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter I.","It is commonly used in construction.","It is a living organism."]},
+{word:"FROST",falseHint:5,hints:["The word has 5 letters.","The word starts with F.","The word contains the letter R.","It forms in cold conditions.","It is a type of hot liquid."]},
+{word:"GRAPE",falseHint:4,hints:["The word has 5 letters.","The word ends with a vowel.","The word contains the letter G.","It is a fruit.","It is a metal."]},
+{word:"CLOCK",falseHint:5,hints:["The word has 5 letters.","The word starts with C.","The word contains the letter O.","It is used to measure or display time.","It is primarily used for cooking food."]},
+{word:"DREAM",falseHint:4,hints:["The word has 5 letters.","The word starts with a consonant.","The word contains the letter A.","It can occur during sleep.","It is a physical object you can hold."]},
+{word:"WHALE",falseHint:5,hints:["The word has 5 letters.","The word starts with W.","The word contains two vowels.","It is a mammal.","It is a land insect."]},
+{word:"CROWN",falseHint:4,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter R.","It can symbolize authority.","It is commonly worn on the feet."]},
+{word:"METAL",falseHint:5,hints:["The word has 5 letters.","The word starts with M.","The word contains the letter A.","Many types conduct electricity.","It is a kind of plant."]},
+{word:"BREAD",falseHint:4,hints:["The word has 5 letters.","The word starts with B.","The word contains the letter E.","It is commonly made from flour.","It is a musical instrument."]},
+{word:"SHARK",falseHint:5,hints:["The word has 5 letters.","The word starts with S.","The word contains the letter A.","It is a fish.","It is a mammal that lives on land."]},
+{word:"TRAIN",falseHint:4,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter A.","It is a form of transportation.","It is a kind of fruit."]},
+{word:"FLAME",falseHint:5,hints:["The word has 5 letters.","The word starts with F.","The word contains the letter A.","It is associated with combustion.","It is usually cold to the touch."]},
+{word:"GRASS",falseHint:4,hints:["The word has 5 letters.","The word starts with G.","The word contains repeated letters.","It is a type of plant.","It is a mammal."]},
+{word:"NIGHT",falseHint:5,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter G.","It is the period of darkness between days.","It is brighter than midday."]},
+{word:"SWORD",falseHint:4,hints:["The word has 5 letters.","The word starts with S.","The word contains the letter O.","It is historically used as a weapon.","It is a type of flower."]},
+{word:"SHELL",falseHint:5,hints:["The word has 5 letters.","The word starts with S.","The word contains repeated letters.","It can protect an animal.","It is made of soft fabric."]},
+{word:"MUSIC",falseHint:5,hints:["The word has 5 letters.","The word starts with M.","The word contains the letter I.","It is organized sound.","It is a mineral."]},
+{word:"LEMON",falseHint:5,hints:["The word has 5 letters.","The word starts with L.","The word contains two vowels.","It is a citrus fruit.","It is generally sweet like candy."]},
+{word:"TOWER",falseHint:5,hints:["The word has 5 letters.","The word ends with a consonant.","The word contains the letter W.","It is a tall structure.","It is a small aquatic animal."]},
+{word:"MAGIC",falseHint:5,hints:["The word has 5 letters.","The word starts with M.","The word contains the letter G.","It is associated with illusion or supernatural abilities.","It is a mathematical unit of distance."]},
+{word:"FORK",falseHint:4,hints:["The word has 4 letters.","The word starts with F.","The word contains the letter O.","It is a utensil often used for eating.","It is a type of tree."]}
+];
+const $=id=>document.getElementById(id);
+function gmt7Date(now=new Date()){return new Date(now.getTime()+7*60*60*1000).toISOString().slice(0,10)}
+function dateOrdinal(dateStr){const d=new Date(dateStr+"T00:00:00Z");return Math.floor(d.getTime()/86400000)}
+const today=gmt7Date();
+const epoch="2026-11-22";
+const dayIndex=Math.max(0,dateOrdinal(today)-dateOrdinal(epoch));
+const puzzleIndex=dayIndex%puzzles.length;
+const puzzle=puzzles[puzzleIndex];
+const puzzleNum=dayIndex+1;
+$("puzzleNumber").textContent="DAILY PUZZLE #"+String(puzzleNum).padStart(3,"0");
+$("wordLength").textContent=puzzle.word.length+" letters";
+const stateKey="paradox-state-v1", themeKey="paradox-theme-v1", helpKey="paradox-help-seen-v1";
+let state=JSON.parse(localStorage.getItem(stateKey)||"{}");
+let attempts=state.date===today?state.attempts||0:0;
+let solved=state.date===today?!!state.solved:false;
+let lost=state.date===today?!!state.lost:false;
+let confirmedFalse=state.date===today?state.confirmedFalse:null;
+let streak=state.streak||0;
+let lastWin=state.lastWin||null;
+function save(){localStorage.setItem(stateKey,JSON.stringify({date:today,attempts,solved,lost,confirmedFalse,streak,lastWin}))}
+function streakNow(){if(!lastWin)return 0;const gap=dateOrdinal(today)-dateOrdinal(lastWin);return gap<=1?streak:0}
+function renderAttempts(){const el=$("attempts");el.innerHTML="";for(let i=0;i<5;i++){const sq=document.createElement("div");sq.className="square"+(i<attempts?" used":"");sq.textContent=i<attempts?"×":"";el.appendChild(sq)}}
+function renderHints(){const a=$("structureHints"),b=$("meaningHints");a.innerHTML="";b.innerHTML="";puzzle.hints.forEach((txt,i)=>{const card=document.createElement("div");card.className="hint"+(confirmedFalse===i+1?" false":"");const n=document.createElement("span");n.className="hint-num";n.textContent=i+1;const t=document.createElement("span");t.textContent=txt;card.append(n,t);(i<3?a:b).appendChild(card)})}
+function renderStreak(){$("streak").textContent="🔥 Streak: "+streakNow()}
+function endGame(win){$("answerForm").classList.add("hidden");const r=$("result");r.classList.add("show");if(win){r.innerHTML=`<h2>PARADOX SOLVED!</h2><p>The word was <strong>${puzzle.word}</strong>.</p><p>False hint: <strong>#${puzzle.falseHint}</strong></p><p class="streak">🔥 Streak: ${streakNow()}</p>`}else{r.innerHTML=`<h2>Game over</h2><p>The word was <strong>${puzzle.word}</strong>.</p><p>The false hint was <strong>#${puzzle.falseHint}</strong>.</p><p>${streakNow()>0?"🔥 Current streak: "+streakNow():"Your streak has ended."}</p>`}}
+function submit(){if(solved||lost)return;const chosen=Number($("falseHint").value),guess=$("wordGuess").value.trim().toUpperCase();if(!chosen){$("feedback").textContent="Select the hint you think is false.";return}if(!guess){$("feedback").textContent="Enter your word guess.";return}if(guess.length!==puzzle.word.length){$("feedback").textContent="Your guess must be "+puzzle.word.length+" letters long.";return}
+attempts++;
+const fb=$("feedback");fb.className="feedback";
+if(chosen!==puzzle.falseHint){fb.classList.add("bad");fb.textContent="Incorrect hint. One attempt lost.";confirmedFalse=null}
+else{confirmedFalse=chosen;if(guess===puzzle.word){solved=true;const gap=lastWin?dateOrdinal(today)-dateOrdinal(lastWin):999;if(gap===1)streak++;else streak=1;lastWin=today;fb.classList.add("good");fb.textContent="Both correct!";save();renderAttempts();renderHints();renderStreak();endGame(true);return}else{fb.classList.add("bad");fb.textContent="False hint identified! Your word is incorrect. One attempt lost."}}
+if(attempts>=5){lost=true;streak=0;save();renderAttempts();renderHints();renderStreak();endGame(false)}else{save();renderAttempts();renderHints();$("falseHint").value="";$("wordGuess").value="";$("wordGuess").focus()}
+}
+function init(){renderAttempts();renderHints();renderStreak();if(solved||lost)endGame(solved);if(localStorage.getItem(themeKey)==="dark")document.documentElement.dataset.theme="dark";if(!localStorage.getItem(helpKey))openModal()}
+$("submitBtn").addEventListener("click",submit);$("wordGuess").addEventListener("keydown",e=>{if(e.key==="Enter")submit()});
+$("themeBtn").addEventListener("click",()=>{const dark=document.documentElement.dataset.theme!=="dark";document.documentElement.dataset.theme=dark?"dark":"light";localStorage.setItem(themeKey,dark?"dark":"light")});
+const backdrop=$("modalBackdrop");function openModal(){backdrop.classList.remove("hidden")}function closeModal(){backdrop.classList.add("hidden");localStorage.setItem(helpKey,"1")}
+$("helpBtn").addEventListener("click",openModal);$("closeModal").addEventListener("click",closeModal);$("gotIt").addEventListener("click",closeModal);backdrop.addEventListener("click",e=>{if(e.target===backdrop)closeModal()});
+function countdown(){const now=new Date();const local=new Date(now.getTime()+7*3600000);const next=new Date(Date.UTC(local.getUTCFullYear(),local.getUTCMonth(),local.getUTCDate()+1));const remaining=next-local;const h=Math.floor(remaining/3600000),m=Math.floor(remaining%3600000/60000),s=Math.floor(remaining%60000/1000);$("countdown").textContent=`Next puzzle in ${String(h).padStart(2,"0")}:${String(m).padStart(2,"0")}:${String(s).padStart(2,"0")}`}
+countdown();setInterval(countdown,1000);init();
+</script>
+</body>
+</html>
